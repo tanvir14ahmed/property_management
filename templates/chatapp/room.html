@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold">{{ conversation.apartment.apartment_name }}</h2>
+      <p class="text-slate-500 dark:text-slate-400 text-sm">Chat · {{ conversation.apartment.building.building_name }}</p>
+    </div>
+    <a href="{% url 'properties:apartment_detail' conversation.apartment.pk %}" class="text-sm font-bold text-brand-600 dark:text-brand-400 hover:opacity-80">← Back to Apartment</a>
+  </div>
+
+  <!-- Messages Area -->
+  <div id="chat-messages" class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6 h-[28rem] overflow-y-auto flex flex-col gap-4">
+    {% if messages %}
+      {% for msg in messages %}
+      <div class="flex {% if msg.sender == request.user %}flex-row-reverse{% else %}flex-row{% endif %} items-end gap-3">
+        <div class="h-8 w-8 flex-shrink-0 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold">
+          {{ msg.sender.full_name|slice:":1" }}
+        </div>
+        <div class="max-w-[70%]">
+          <p class="text-[10px] font-bold uppercase tracking-widest {% if msg.sender == request.user %}text-right{% endif %} text-slate-400 mb-1">{{ msg.sender.full_name }}</p>
+          <div class="p-3.5 rounded-2xl {% if msg.sender == request.user %}bg-brand-600 text-white rounded-br-sm{% else %}bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-bl-sm{% endif %}">
+            <p class="text-sm leading-relaxed">{{ msg.message_text }}</p>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1 {% if msg.sender == request.user %}text-right{% endif %}">{{ msg.created_at|timesince }} ago</p>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="flex-1 flex flex-col items-center justify-center text-center">
+      <div class="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center mb-4">
+        <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      </div>
+      <p class="text-slate-400 text-sm">No messages yet. Start the conversation!</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Message Input -->
+  <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+    <form method="post" class="flex gap-3">
+      {% csrf_token %}
+      <input type="text" name="message_text" placeholder="Type a message…" class="flex-1 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all" autocomplete="off" required>
+      <button type="submit" class="px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/25 transition-all">Send</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Scroll to bottom on load
+  const chatEl = document.getElementById('chat-messages');
+  if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
+  
+  // Auto-refresh chat every 10 seconds
+  setInterval(() => { location.reload(); }, 10000);
+</script>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6 max-w-3xl mx-auto">
+  <div class="flex items-center gap-3">
+    <a href="{% url 'payments:list' %}" class="text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <h2 class="text-2xl font-bold">Payment Details</h2>
+  </div>
+
+  <!-- Payment Card -->
+  <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-8">
+    <div class="flex items-start justify-between flex-wrap gap-4 mb-8">
+      <div>
+        <h3 class="text-2xl font-black text-brand-600 dark:text-brand-400">${{ payment_request.amount }}</h3>
+        <p class="font-bold text-lg mt-1">{{ payment_request.title }}</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ payment_request.get_payment_type_display }} · {{ payment_request.apartment.apartment_name }} ({{ payment_request.apartment.apartment_code }})</p>
+      </div>
+      <span class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest
+        {% if payment_request.status == 'approved' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400
+        {% elif payment_request.status == 'pending' %}bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400
+        {% elif payment_request.status == 'marked_paid' %}bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+        {% elif payment_request.status == 'rejected' %}bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400
+        {% else %}bg-slate-100 text-slate-600 dark:bg-slate-800{% endif %}">
+        {{ payment_request.get_status_display }}
+      </span>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+      <div>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Billing Period</p>
+        <p class="text-sm font-semibold">{{ payment_request.billing_period_start }} → {{ payment_request.billing_period_end }}</p>
+      </div>
+      <div>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Due Date</p>
+        <p class="text-sm font-semibold">{{ payment_request.due_date }}</p>
+      </div>
+      <div>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Tenant</p>
+        <p class="text-sm font-semibold">{{ payment_request.tenant.full_name }}</p>
+      </div>
+    </div>
+
+    {% if payment_request.description %}
+    <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 mb-6">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Description</p>
+      <p class="text-sm text-slate-600 dark:text-slate-300">{{ payment_request.description }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    {% if payment_request.status == 'pending' and request.user == payment_request.tenant and not payment_request.confirmations.exists %}
+    <a href="{% url 'payments:confirm' payment_request.pk %}" class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/25 transition-all">
+      Submit Payment Confirmation
+    </a>
+    {% endif %}
+
+    <!-- Confirmations List -->
+    {% for conf in payment_request.confirmations.all %}
+    <div class="mt-6 p-6 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-900 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="font-bold text-sm">Confirmation from {{ conf.submitted_by.full_name }}</p>
+          <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{{ conf.created_at|date:"M d, Y · H:i" }}</p>
+        </div>
+        <span class="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider
+          {% if conf.status == 'approved' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400
+          {% elif conf.status == 'pending' %}bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400
+          {% else %}bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400{% endif %}">
+          {{ conf.get_status_display }}
+        </span>
+      </div>
+      
+      <div class="space-y-3 mb-6">
+        <div class="flex items-center gap-3">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 w-24">Method:</p>
+          <p class="text-sm font-semibold">{{ conf.payment_method_text }}</p>
+        </div>
+        {% if conf.note %}
+        <div class="flex items-start gap-3">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 w-24">Note:</p>
+          <p class="text-sm text-slate-600 dark:text-slate-400 italic">"{{ conf.note }}"</p>
+        </div>
+        {% endif %}
+        {% if conf.proof_image %}
+        <div class="pt-2">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Proof Document:</p>
+          <a href="{{ conf.proof_image.url }}" target="_blank" class="block group relative w-max">
+            <img src="{{ conf.proof_image.url }}" class="rounded-xl max-h-48 object-cover border border-slate-200 dark:border-slate-800 transition-all hover:opacity-90" alt="Payment proof">
+            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-xl">
+              <span class="bg-white/90 dark:bg-slate-900/90 px-3 py-1.5 rounded-lg text-xs font-bold shadow-xl">View Full Image</span>
+            </div>
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Owner Decision Buttons -->
+      {% if request.user == payment_request.owner and conf.status == 'pending' %}
+      <div class="pt-6 border-t border-slate-200 dark:border-slate-800 flex gap-4">
+        <form action="{% url 'payments:approve_confirmation' conf.pk %}" method="post" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-brand-500/20">
+            Approve & Generate Invoice
+          </button>
+        </form>
+        <form action="{% url 'payments:reject_confirmation' conf.pk %}" method="post" class="inline">
+          {% csrf_token %}
+          <button type="submit" onclick="return confirm('Are you sure you want to reject this payment confirmation?')" class="px-5 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:text-rose-600 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-xs uppercase tracking-widest transition-all">
+            Reject
+          </button>
+        </form>
+      </div>
+      {% endif %}
+      <!-- Tenant Edit Button -->
+      {% if request.user == conf.submitted_by and conf.status != 'approved' and payment_request.status != 'approved' %}
+      <div class="pt-6 border-t border-slate-200 dark:border-slate-800">
+        <a href="{% url 'payments:edit_confirmation' conf.pk %}" class="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-brand-200 dark:border-brand-800 hover:border-brand-500 text-brand-700 dark:text-brand-400 rounded-xl font-bold text-xs uppercase tracking-widest transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Edit Submission
+        </a>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Invoice link -->
+    {% if payment_request.invoice %}
+    <div class="mt-6 p-5 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/10">
+      <p class="font-bold text-emerald-800 dark:text-emerald-400 mb-3">Invoice: {{ payment_request.invoice.invoice_number }}</p>
+      <div class="flex gap-3">
+        {% if payment_request.invoice.owner_copy_pdf %}<a href="/media/{{ payment_request.invoice.owner_copy_pdf }}" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all" target="_blank">Download Owner Copy</a>{% endif %}
+        {% if payment_request.invoice.tenant_copy_pdf %}<a href="/media/{{ payment_request.invoice.tenant_copy_pdf }}" class="px-4 py-2 border border-emerald-600 text-emerald-700 rounded-xl text-xs font-bold hover:bg-emerald-50 transition-all" target="_blank">Download Tenant Copy</a>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

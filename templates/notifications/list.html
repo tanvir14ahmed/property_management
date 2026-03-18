@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold">Notifications</h2>
+      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Stay updated on everything happening across your properties</p>
+    </div>
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">
+      {% csrf_token %}
+      <button type="submit" class="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-900 transition-all">Mark All Read</button>
+    </form>
+  </div>
+
+  {% if notifications %}
+  <div class="space-y-2">
+    {% for notif in notifications %}
+    <div class="flex items-start gap-4 p-5 glass border {% if notif.is_read %}border-slate-100 dark:border-slate-900{% else %}border-brand-200 dark:border-brand-800/50 bg-brand-50/50 dark:bg-brand-900/10{% endif %} rounded-2xl transition-colors">
+      <div class="flex-shrink-0 mt-0.5">
+        <div class="h-9 w-9 rounded-xl {% if notif.is_read %}bg-slate-100 dark:bg-slate-900{% else %}bg-brand-100 dark:bg-brand-900/30{% endif %} flex items-center justify-center">
+          <svg class="w-4 h-4 {% if notif.is_read %}text-slate-400{% else %}text-brand-600 dark:text-brand-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        </div>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold {% if not notif.is_read %}text-brand-700 dark:text-brand-300{% endif %}">{{ notif.title }}</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ notif.message }}</p>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">{{ notif.created_at|timesince }} ago</p>
+      </div>
+      {% if not notif.is_read %}
+      <a href="{% url 'notifications:mark_read' notif.pk %}" class="flex-shrink-0 text-xs font-bold text-brand-600 dark:text-brand-400 hover:opacity-80 transition-opacity mt-1">Mark Read</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-24 glass border border-slate-200 dark:border-slate-800 rounded-3xl">
+    <div class="h-16 w-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center mx-auto mb-6">
+      <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+    </div>
+    <h3 class="text-xl font-bold mb-2">All caught up!</h3>
+    <p class="text-slate-500 dark:text-slate-400 text-sm">You have no notifications right now.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

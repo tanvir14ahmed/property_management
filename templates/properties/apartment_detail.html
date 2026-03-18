@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-8">
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+    <a href="{% url 'properties:building_list' %}" class="hover:text-brand-600 dark:hover:text-brand-400">Buildings</a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <a href="{% url 'properties:building_detail' apartment.building.pk %}" class="hover:text-brand-600 dark:hover:text-brand-400">{{ apartment.building.building_name }}</a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span class="font-semibold text-slate-800 dark:text-slate-200">{{ apartment.apartment_name }}</span>
+  </div>
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <h2 class="text-2xl font-bold">{{ apartment.apartment_name }}</h2>
+        <span class="font-mono text-xs bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 copy-code cursor-pointer" data-code="{{ apartment.apartment_code }}">{{ apartment.apartment_code }}</span>
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase {% if apartment.is_occupied %}bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400{% else %}bg-slate-100 text-slate-500 dark:bg-slate-800{% endif %}">
+          {% if apartment.is_occupied %}Occupied{% else %}Vacant{% endif %}
+        </span>
+      </div>
+      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Floor {{ apartment.floor_number|default:"N/A" }} · {{ apartment.bedrooms|default:"N/A" }} Bed · {{ apartment.bathrooms|default:"N/A" }} Bath · {{ apartment.square_feet|default:"N/A" }} sq ft</p>
+    </div>
+    <a href="{% url 'properties:apartment_edit' apartment.pk %}" class="px-4 py-2 border border-slate-200 dark:border-slate-800 text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-all">Edit Apartment</a>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Main Details -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Stats -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Monthly Rent</p>
+          <p class="text-2xl font-black text-brand-600 dark:text-brand-400">{% if apartment.rent_amount %}${{ apartment.rent_amount }}{% else %}—{% endif %}</p>
+        </div>
+        <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-5">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Current Tenant</p>
+          <p class="text-sm font-bold mt-1">{% if occupancy %}{{ occupancy.tenant.full_name }}{% else %}Vacant{% endif %}</p>
+          {% if occupancy %}<p class="text-xs text-slate-400 mt-0.5">Since {{ occupancy.start_date }}</p>{% endif %}
+        </div>
+      </div>
+
+      <!-- Join Requests -->
+      {% if join_requests %}
+      <div class="glass border border-amber-200 dark:border-amber-800/50 rounded-2xl p-6 bg-amber-50/50 dark:bg-amber-900/10">
+        <h3 class="font-bold mb-4 text-amber-800 dark:text-amber-400">Pending Join Requests</h3>
+        {% for jr in join_requests %}
+        <div class="flex items-center justify-between gap-4 p-3 bg-white dark:bg-slate-900 rounded-xl mb-2">
+          <div>
+            <p class="font-semibold text-sm">{{ jr.tenant.full_name }}</p>
+            <p class="text-xs text-slate-400">{{ jr.tenant.email }}</p>
+          </div>
+          <div class="flex gap-2">
+            <form method="post" action="{% url 'properties:join_request_approve' jr.pk %}">{% csrf_token %}<button type="submit" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold">Approve</button></form>
+            <form method="post" action="{% url 'properties:join_request_reject' jr.pk %}">{% csrf_token %}<button type="submit" class="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-bold">Reject</button></form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Recent Payments -->
+      <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+        <h3 class="font-bold mb-4">Recent Payments</h3>
+        {% if payment_requests %}
+        <div class="space-y-2">
+          {% for pr in payment_requests %}
+          <div class="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+            <div>
+              <p class="font-semibold text-sm">{{ pr.title }}</p>
+              <p class="text-xs text-slate-400">{{ pr.due_date }}</p>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-sm">${{ pr.amount }}</p>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {% if pr.status == 'approved' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400{% elif pr.status == 'pending' %}bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400{% else %}bg-slate-100 text-slate-600 dark:bg-slate-800{% endif %}">{{ pr.get_status_display }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-slate-400 text-sm text-center py-4">No payment requests yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Sidebar: Actions & Recent Issues -->
+    <div class="space-y-6">
+      {% if occupancy or request.user == apartment.building.owner %}
+      <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+        <h3 class="font-bold mb-4">Support & Chat</h3>
+        <a href="{% url 'chatapp:apartment_chat' apartment.pk %}" class="w-full flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/25 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          Open Chat Room
+        </a>
+      </div>
+      {% endif %}
+
+      <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+        <h3 class="font-bold mb-4">Recent Issues</h3>
+        {% if issues %}
+        <div class="space-y-3">
+          {% for issue in issues %}
+          <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {% if issue.priority == 'urgent' %}bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400{% elif issue.priority == 'high' %}bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400{% else %}bg-slate-100 text-slate-600 dark:bg-slate-800{% endif %}">{{ issue.priority|upper }}</span>
+              <span class="text-[10px] font-bold text-slate-400">{{ issue.status|upper }}</span>
+            </div>
+            <p class="text-sm font-semibold">{{ issue.title }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-slate-400 text-sm text-center py-4">No issues reported.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.copy-code').forEach(el => {
+    el.addEventListener('click', () => {
+      navigator.clipboard.writeText(el.dataset.code).then(() => {
+        const orig = el.textContent.trim(); el.textContent = 'Copied!';
+        setTimeout(() => el.textContent = orig, 1500);
+      });
+    });
+  });
+</script>
+{% endblock %}

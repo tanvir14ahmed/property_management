@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-8">
+  <div>
+    <h2 class="text-2xl font-bold">Find an Apartment</h2>
+    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Search by building code or apartment code to find and request a place</p>
+  </div>
+
+  <!-- Search Tabs + Form -->
+  <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+    <div class="flex gap-2 mb-6 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl w-fit">
+      <a href="?mode=building&code={{ code }}" class="px-5 py-2 rounded-lg text-sm font-bold transition-all {% if mode == 'building' %}bg-white dark:bg-slate-800 shadow text-brand-600 dark:text-brand-400{% else %}text-slate-500 hover:text-slate-700 dark:hover:text-slate-300{% endif %}">By Building Code</a>
+      <a href="?mode=apartment&code={{ code }}" class="px-5 py-2 rounded-lg text-sm font-bold transition-all {% if mode == 'apartment' %}bg-white dark:bg-slate-800 shadow text-brand-600 dark:text-brand-400{% else %}text-slate-500 hover:text-slate-700 dark:hover:text-slate-300{% endif %}">By Apartment Code</a>
+    </div>
+
+    <form method="get" class="flex gap-3">
+      <input type="hidden" name="mode" value="{{ mode }}">
+      <input type="text" name="code" value="{{ code }}" placeholder="Enter {% if mode == 'building' %}building{% else %}apartment{% endif %} code (e.g. B1234567)…" class="flex-1 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm transition-all font-mono uppercase" autocomplete="off">
+      <button type="submit" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/25 transition-all">Search</button>
+    </form>
+  </div>
+
+  <!-- Results -->
+  {% if searched %}
+    {% if results %}
+    <div class="space-y-4">
+      <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">{{ results|length }} result{{ results|length|pluralize }} found</p>
+      {% for apt in results %}
+      <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-col md:flex-row md:items-center gap-6">
+          <div class="flex-1">
+            <div class="flex items-center gap-3 flex-wrap mb-2">
+              <h3 class="font-bold text-lg">{{ apt.apartment_name }}</h3>
+              <span class="font-mono text-xs bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800">{{ apt.apartment_code }}</span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase {% if apt.is_occupied %}bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400{% else %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400{% endif %}">
+                {% if apt.is_occupied %}Occupied{% else %}Available{% endif %}
+              </span>
+            </div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">Building: <span class="font-semibold">{{ apt.building.building_name }} ({{ apt.building.building_code }})</span></p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{{ apt.building.city }}, {{ apt.building.country }}</p>
+            <div class="flex gap-4 mt-3 text-sm">
+              {% if apt.floor_number %}<span class="text-slate-600 dark:text-slate-400">Floor {{ apt.floor_number }}</span>{% endif %}
+              {% if apt.bedrooms %}<span class="text-slate-600 dark:text-slate-400">{{ apt.bedrooms }} Bed</span>{% endif %}
+              {% if apt.bathrooms %}<span class="text-slate-600 dark:text-slate-400">{{ apt.bathrooms }} Bath</span>{% endif %}
+              {% if apt.square_feet %}<span class="text-slate-600 dark:text-slate-400">{{ apt.square_feet }} sq ft</span>{% endif %}
+              {% if apt.rent_amount %}<span class="font-bold text-brand-600 dark:text-brand-400">${{ apt.rent_amount }}/mo</span>{% endif %}
+            </div>
+          </div>
+          <div class="flex-shrink-0">
+            {% if not apt.is_occupied %}
+              {% if apt.pk in existing_requests %}
+              <span class="px-5 py-2.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-xl text-sm font-bold">Request Pending</span>
+              {% else %}
+              <form method="post" action="{% url 'properties:submit_join_request' apt.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-brand-500/25 transition-all">
+                  Request to Join
+                </button>
+              </form>
+              {% endif %}
+            {% else %}
+            <span class="px-5 py-2.5 bg-slate-100 dark:bg-slate-900 text-slate-500 rounded-xl text-sm font-bold">Not Available</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-20 glass border border-slate-200 dark:border-slate-800 rounded-2xl">
+      <p class="text-slate-400 text-sm mb-2">No apartments found for this code.</p>
+      <p class="text-xs text-slate-400">Make sure the code is correct and try again.</p>
+    </div>
+    {% endif %}
+  {% else %}
+  <!-- Tips -->
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+      <div class="h-10 w-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
+        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      </div>
+      <h3 class="font-bold mb-1">Search by Building Code</h3>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Get the building code from your property manager and see all available units.</p>
+    </div>
+    <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+      <div class="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
+        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </div>
+      <h3 class="font-bold mb-1">Search by Apartment Code</h3>
+      <p class="text-sm text-slate-500 dark:text-slate-400">If you have the specific apartment code, search directly for that unit.</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

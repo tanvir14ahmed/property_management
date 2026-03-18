@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-8">
+  <!-- Header -->
+  <div class="flex items-center gap-6">
+    <div class="h-20 w-20 rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-500 flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-brand-500/25">
+      {{ request.user.full_name|slice:":1" }}
+    </div>
+    <div>
+      <h2 class="text-2xl font-bold">{{ request.user.full_name }}</h2>
+      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">{{ request.user.email }}</p>
+      <div class="flex gap-2 mt-2 flex-wrap">
+        {% if request.user.is_owner %}
+        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Owner</span>
+        {% endif %}
+        {% if request.user.is_tenant %}
+        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Tenant</span>
+        {% endif %}
+        {% if not request.user.is_owner and not request.user.is_tenant %}
+        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">No role set</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Form -->
+  <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-8">
+    <h3 class="text-lg font-bold mb-6">Edit Profile</h3>
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="space-y-1.5">
+        <label for="{{ field.id_for_label }}" class="block text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+          {{ field.label }}
+        </label>
+        <input
+          type="text"
+          name="{{ field.html_name }}"
+          id="{{ field.id_for_label }}"
+          class="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none text-sm"
+          value="{{ field.value|default:'' }}"
+        >
+        {% if field.errors %}
+        <p class="text-[11px] text-rose-500 font-medium">{{ field.errors.as_text }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="pt-2">
+        <button type="submit" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm tracking-widest uppercase shadow-lg shadow-brand-500/25 transition-all">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

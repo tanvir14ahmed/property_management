@@ -1,0 +1,74 @@
+from __future__ import annotations
+
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404, redirect
+from django.views.generic import TemplateView
+
+from properties.models import Apartment, ApartmentOccupancy
+
+from .forms import MessageForm
+from .models import Conversation, Message
+from django.db.models import Q
+from django.views.generic import ListView
+
+
+class ChatListView(LoginRequiredMixin, ListView):
+    model = Apartment
+    template_name = "chatapp/list.html"
+    context_object_name = "apartments"
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_owner:
+            # Show all apartments in owner's buildings that have an active tenant
+            return Apartment.objects.filter(
+                building__owner=user,
+                assignments__is_active=True
+            ).distinct().select_related("building", "conversation")
+        if user.is_tenant:
+            # Show apartments where this user is the active tenant
+            return Apartment.objects.filter(
+                assignments__tenant=user,
+                assignments__is_active=True
+            ).select_related("building", "conversation")
+        return Apartment.objects.none()
+
+
+class ChatRoomView(LoginRequiredMixin, TemplateView):
+    template_name = "chatapp/room.html"
+    form_class = MessageForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.apartment = get_object_or_404(Apartment, pk=kwargs["pk"], is_active=True)
+        if not self._user_has_access(request.user):
+            messages.error(request, "You cannot access this chat.")
+            return redirect("core:dashboard")
+        self.conversation, _ = Conversation.objects.get_or_create(apartment=self.apartment)
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            Message.objects.create(
+                conversation=self.conversation,
+                sender=request.user,
+                message_text=form.cleaned_data["message_text"],
+            )
+            messages.success(request, "Message sent.")
+            return redirect(request.path)
+        return self.get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["conversation"] = self.conversation
+        context["messages"] = self.conversation.messages.select_related("sender")
+        context["form"] = self.form_class()
+        return context
+
+    def _user_has_access(self, user):
+        if self.apartment.building.owner == user:
+            return True
+        return ApartmentOccupancy.objects.filter(
+            apartment=self.apartment, tenant=user, is_active=True
+        ).exists()
