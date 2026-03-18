@@ -1,0 +1,15 @@
+{% for msg in chat_messages %}
+<div class="flex {% if msg.sender == request.user %}flex-row-reverse{% else %}flex-row{% endif %} items-end gap-3 animate-slide-up group" style="animation-delay: {{ forloop.counter0|add:1 }}0ms">
+  <div class="h-9 w-9 flex-shrink-0 rounded-2xl {% if msg.sender == request.user %}bg-slate-800 dark:bg-slate-700{% else %}bg-brand-500{% endif %} flex items-center justify-center text-white text-[10px] font-black shadow-lg">
+    {{ msg.sender.full_name|slice:":1" }}
+  </div>
+  <div class="max-w-[75%] space-y-1">
+    <div class="px-5 py-4 rounded-[1.5rem] shadow-xl {% if msg.sender == request.user %}bg-gradient-to-br from-brand-600 to-brand-700 text-white rounded-br-sm{% else %}bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-sm border border-slate-100 dark:border-slate-800{% endif %}">
+      <p class="text-[13px] leading-relaxed">{{ msg.message_text }}</p>
+    </div>
+    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1 opacity-0 group-hover:opacity-100 transition-opacity {% if msg.sender == request.user %}text-right{% endif %}">
+      {{ msg.created_at|date:"H:i" }} · {{ msg.created_at|timesince }} ago
+    </p>
+  </div>
+</div>
+{% endfor %}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView
 
 from properties.models import Apartment, ApartmentOccupancy
@@ -35,6 +35,8 @@ class ChatListView(LoginRequiredMixin, ListView):
         return Apartment.objects.none()
 
 
+from django.utils import timezone
+
 class ChatRoomView(LoginRequiredMixin, TemplateView):
     template_name = "chatapp/room.html"
     form_class = MessageForm
@@ -47,24 +49,38 @@ class ChatRoomView(LoginRequiredMixin, TemplateView):
         self.conversation, _ = Conversation.objects.get_or_create(apartment=self.apartment)
         return super().dispatch(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
-        if form.is_valid():
-            Message.objects.create(
-                conversation=self.conversation,
-                sender=request.user,
-                message_text=form.cleaned_data["message_text"],
-            )
-            messages.success(request, "Message sent.")
-            return redirect(request.path)
-        return self.get(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        if request.headers.get('HX-Request') and 'poll' in request.GET:
+            context = self.get_context_data()
+            return render(request, "chatapp/partials/message_list.html", context)
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Mark other sender's messages as read
+        self.conversation.messages.filter(
+            ~Q(sender=self.request.user), 
+            is_read=False
+        ).update(is_read=True, read_at=timezone.now())
+        
         context["conversation"] = self.conversation
-        context["messages"] = self.conversation.messages.select_related("sender")
+        context["chat_messages"] = self.conversation.messages.select_related("sender")
         context["form"] = self.form_class()
         return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            msg = form.save(commit=False)
+            msg.sender = request.user
+            msg.conversation = self.conversation
+            msg.save()
+            
+            if request.headers.get('HX-Request'):
+                return render(request, "chatapp/partials/single_message.html", {"msg": msg})
+                
+            return redirect("chatapp:apartment_chat", pk=self.kwargs["pk"])
+        return self.get(request, *args, **kwargs)
 
     def _user_has_access(self, user):
         if self.apartment.building.owner == user:

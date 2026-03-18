@@ -23,7 +23,7 @@
   {% if buildings %}
   <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
     {% for building in buildings %}
-    <a href="{% url 'properties:building_detail' building.pk %}" class="group glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:border-brand-400 dark:hover:border-brand-600 transition-all hover:shadow-xl hover:shadow-brand-500/10 block">
+    <a href="{% url 'properties:building_detail' building.pk %}" class="group glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:border-brand-400 dark:hover:border-brand-600 transition-all hover:shadow-xl hover:shadow-brand-500/10 block animate-slide-up hover-lift" style="animation-delay: {{ forloop.counter0|add:1 }}00ms">
       <div class="flex items-start justify-between mb-4">
         <div class="h-12 w-12 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
           <svg class="w-6 h-6 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>

@@ -29,6 +29,8 @@
         },
       }
     </script>
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
     <style>
       [v-cloak] { display: none; }
       .glass {
@@ -53,7 +55,12 @@
       }
     </style>
   </head>
-  <body class="min-h-screen transition-colors duration-300 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+  <body hx-boost="true" class="min-h-screen transition-colors duration-300 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <script>
+      document.body.addEventListener('htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+      });
+    </script>
     <div class="min-h-screen flex flex-col">
       <header class="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 glass">
         <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-8">
@@ -133,7 +140,7 @@
         </div>
         {% endif %}
         
-        <div class="mx-auto max-w-7xl px-4 py-10 lg:px-8">
+        <div class="mx-auto max-w-7xl px-4 py-10 lg:px-8 animate-slide-up">
           {% block content %}{% endblock %}
         </div>
       </main>

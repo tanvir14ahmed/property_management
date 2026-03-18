@@ -39,4 +39,37 @@
     </form>
   </div>
 </div>
+{{ apartment_map|json_script:"apartment-data" }}
+<script>
+  (function() {
+    const apartmentMap = JSON.parse(document.getElementById('apartment-data').textContent);
+    const buildingSelect = document.getElementById('id_building');
+    const apartmentSelect = document.getElementById('id_apartment');
+
+    function updateApartments() {
+      const buildingId = buildingSelect.value;
+      const currentAptId = apartmentSelect.value;
+      
+      // Clear current options except empty one
+      apartmentSelect.innerHTML = '<option value="">---------</option>';
+      
+      if (!buildingId) return;
+
+      const filtered = apartmentMap.filter(a => a.building_id == buildingId);
+      filtered.forEach(apt => {
+        const opt = document.createElement('option');
+        opt.value = apt.id;
+        opt.textContent = `${apt.apartment_name} (${apt.apartment_code})`;
+        if (apt.id == currentAptId) opt.selected = true;
+        apartmentSelect.appendChild(opt);
+      });
+    }
+
+    if (buildingSelect) {
+      buildingSelect.addEventListener('change', updateApartments);
+      // Run once on load to sync if building already selected
+      updateApartments();
+    }
+  })();
+</script>
 {% endblock %}

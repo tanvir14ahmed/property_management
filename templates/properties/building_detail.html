@@ -78,7 +78,7 @@
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
           {% for apt in apartments %}
-          <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors">
+          <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors animate-slide-up" style="animation-delay: {{ forloop.counter0|add:1 }}00ms">
             <td class="px-6 py-4">
               <p class="font-semibold">{{ apt.apartment_name }}</p>
               <p class="font-mono text-xs text-slate-400">{{ apt.apartment_code }}</p>

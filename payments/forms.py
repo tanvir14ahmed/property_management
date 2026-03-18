@@ -11,6 +11,19 @@ class PaymentRequestForm(forms.ModelForm):
             "due_date": forms.DateInput(attrs={"type": "date"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        owner = kwargs.pop("owner", None)
+        super().__init__(*args, **kwargs)
+        if owner:
+            self.fields["building"].queryset = owner.buildings.all()
+            self.fields["apartment"].queryset = owner.buildings.all().first().apartments.all() if owner.buildings.exists() else owner.buildings.none()
+            # Note: The initial queryset for apartments is mostly for validation. 
+            # Interactive filtering is handled in the template via JS.
+            self.fields["apartment"].queryset = owner.buildings.all().first().apartments.none() if not owner.buildings.exists() else owner.buildings.all().first().apartments.all()
+            # Actually, let's just allow all apartments for the owner initially for easier JS filtering
+            from properties.models import Apartment
+            self.fields["apartment"].queryset = Apartment.objects.filter(building__owner=owner)
+
 class PaymentConfirmationForm(forms.ModelForm):
     class Meta:
         model = PaymentConfirmation
@@ -29,4 +42,5 @@ class ExpenseForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if owner:
             self.fields["building"].queryset = owner.buildings.all()
-            # We'll handle apartment filtering via JS or simple queryset if needed
+            from properties.models import Apartment
+            self.fields["apartment"].queryset = Apartment.objects.filter(building__owner=owner)

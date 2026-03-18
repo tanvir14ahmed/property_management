@@ -36,6 +36,11 @@ class PaymentRequestCreateView(LoginRequiredMixin, CreateView):
     template_name = "payments/create.html"
     success_url = reverse_lazy("payments:list")
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["owner"] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         user = self.request.user
         form.instance.owner = user
@@ -62,6 +67,13 @@ class PaymentRequestCreateView(LoginRequiredMixin, CreateView):
     def form_invalid(self, form):
         messages.error(self.request, "Could not create request; please fix the errors below.")
         return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from properties.models import Apartment
+        apartments = Apartment.objects.filter(building__owner=self.request.user).values("id", "building_id", "apartment_name", "apartment_code")
+        context["apartment_map"] = list(apartments)
+        return context
 
 
 class PaymentRequestDetailView(LoginRequiredMixin, DetailView):
@@ -264,6 +276,14 @@ class FinancialDashboardView(LoginRequiredMixin, ListView):
         return context
 
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from properties.models import Apartment
+        apartments = Apartment.objects.filter(building__owner=self.request.user).values("id", "building_id", "apartment_name", "apartment_code")
+        context["apartment_map"] = list(apartments)
+        return context
+
+
 class ExpenseCreateView(LoginRequiredMixin, CreateView):
     model = Expense
     form_class = ExpenseForm
@@ -279,3 +299,10 @@ class ExpenseCreateView(LoginRequiredMixin, CreateView):
         form.instance.owner = self.request.user
         messages.success(self.request, "Expense added successfully.")
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from properties.models import Apartment
+        apartments = Apartment.objects.filter(building__owner=self.request.user).values("id", "building_id", "apartment_name", "apartment_code")
+        context["apartment_map"] = list(apartments)
+        return context
