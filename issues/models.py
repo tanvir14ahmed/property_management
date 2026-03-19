@@ -8,6 +8,18 @@ from django.utils import timezone
 from core.services import create_notification
 
 
+class Vendor(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="vendors")
+    name = models.CharField(max_length=128)
+    specialty = models.CharField(max_length=64, help_text="e.g. Plumber, Electrician")
+    phone_number = models.CharField(max_length=32, blank=True)
+    email = models.EmailField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.specialty})"
+
+
 class Issue(models.Model):
     PRIORITY_CHOICES = (
         ("low", "Low"),
@@ -32,6 +44,7 @@ class Issue(models.Model):
     priority = models.CharField(max_length=16, choices=PRIORITY_CHOICES, default="medium")
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="open")
     image = models.ImageField(upload_to="issues/images/", blank=True, null=True)
+    vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_issues")
     resolved_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

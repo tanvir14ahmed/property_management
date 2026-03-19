@@ -98,6 +98,7 @@ class ApartmentOccupancy(models.Model):
     start_date = models.DateField(default=date.today)
     end_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    lease_document = models.FileField(upload_to="leases/", blank=True, null=True)
     approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="approvals")
     approved_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)

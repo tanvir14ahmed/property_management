@@ -2,14 +2,20 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="utf-8" />
-    <title>Property Management</title>
+    <title>Property Suite</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         darkMode: 'class',
         theme: {
           extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
             colors: {
               brand: {
                 50: '#f0f9ff',
@@ -33,154 +39,289 @@
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
     <style>
       [v-cloak] { display: none; }
-      .glass {
-        background: rgba(15, 23, 42, 0.7);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+
+      /* Sidebar scrollbar */
+      .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+      .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+      .sidebar-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+      /* Select fixes */
+      select, option { color: inherit !important; background-color: transparent !important; }
+      .dark select, .dark option { background-color: #0f172a !important; color: #f1f5f9 !important; }
+      .dark select { border-color: #1e293b !important; }
+
+      /* Sidebar nav link active state */
+      .nav-link { position: relative; }
+      .nav-link.active { color: #0ea5e9; background: rgba(14, 165, 233, 0.08); }
+      .nav-link.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 4px;
+        bottom: 4px;
+        width: 3px;
+        border-radius: 0 3px 3px 0;
+        background: #0ea5e9;
       }
-      .light .glass {
-        background: rgba(255, 255, 255, 0.7);
-      }
-      /* Dropdown/Select Fixes */
-      select, option {
-        color: inherit !important;
-        background-color: transparent !important;
-      }
-      .dark select, .dark option {
-        background-color: #0f172a !important; /* slate-900 */
-        color: #f1f5f9 !important; /* slate-100 */
-      }
-      .dark select {
-        border-color: #1e293b !important; /* slate-800 */
+
+      /* Mobile overlay */
+      .sidebar-overlay {
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
       }
     </style>
   </head>
-  <body hx-boost="true" class="min-h-screen transition-colors duration-300 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+  <body hx-boost="true" class="min-h-screen font-sans transition-colors duration-300 bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <!-- Theme init (runs before paint to avoid FOUC) -->
+    <script>
+      (function() {
+        const html = document.documentElement;
+        const saved = localStorage.getItem('theme');
+        if (saved === 'light') {
+          html.classList.remove('dark');
+          html.classList.add('light');
+        } else {
+          html.classList.add('dark');
+          html.classList.remove('light');
+        }
+      })();
+    </script>
     <script>
       document.body.addEventListener('htmx:configRequest', (event) => {
         event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
       });
     </script>
-    <div class="min-h-screen flex flex-col">
-      <header class="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 glass">
-        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-8">
-          <div class="flex items-center gap-4">
-            <div class="h-10 w-10 rounded-xl bg-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/20">
-              P
+
+    <div class="flex min-h-screen">
+
+      {% if user.is_authenticated %}
+      <!-- ==================== SIDEBAR ==================== -->
+      <!-- Mobile overlay -->
+      <div id="sidebar-overlay" class="sidebar-overlay fixed inset-0 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+      <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 flex flex-col border-r border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-900 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-auto transition-transform duration-200 ease-in-out">
+
+        <!-- Logo -->
+        <div class="flex items-center gap-3 px-5 py-5 border-b border-slate-100 dark:border-slate-800/60">
+          <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-brand-500/20">
+            PS
+          </div>
+          <div>
+            <h1 class="text-sm font-extrabold tracking-tight">Property Suite</h1>
+            <p class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Edge Ventures</p>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto sidebar-scroll px-3 py-4 space-y-1">
+          <p class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600">Main</p>
+
+          <a href="{% url 'core:dashboard' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
+            Dashboard
+          </a>
+
+          <a href="{% url 'properties:building_list' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            Properties
+          </a>
+
+          <a href="{% url 'payments:list' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            Payments
+          </a>
+
+          {% if request.user.is_owner %}
+          <a href="{% url 'payments:finances' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Finances
+          </a>
+          {% endif %}
+
+          <a href="{% url 'issues:list' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+            Issues
+          </a>
+
+          <a href="{% url 'chatapp:list' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            Messages
+          </a>
+
+          <div class="pt-4 pb-2">
+            <p class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600">Discover</p>
+          </div>
+
+          <a href="{% url 'properties:public_listings' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Find a Home
+          </a>
+
+          {% if user.is_tenant %}
+          <a href="{% url 'properties:search' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            Search Apartments
+          </a>
+          {% endif %}
+        </nav>
+
+        <!-- Sidebar footer: user + theme -->
+        <div class="border-t border-slate-100 dark:border-slate-800/60 p-4 space-y-3">
+          <!-- Theme toggle -->
+          <button id="theme-toggle" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <svg id="sun-icon" class="w-[18px] h-[18px] hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg id="moon-icon" class="w-[18px] h-[18px] block dark:hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            <span class="dark:hidden">Dark Mode</span>
+            <span class="hidden dark:inline">Light Mode</span>
+          </button>
+
+          <!-- User profile -->
+          <div class="flex items-center gap-3 px-3">
+            <div class="h-8 w-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {{ user.full_name|slice:":1" }}
             </div>
-            <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">Edge Ventures</p>
-              <h1 class="text-xl font-bold tracking-tight">Property Suite</h1>
+            <div class="flex-1 min-w-0">
+              <p class="text-[13px] font-semibold truncate">{{ user.full_name }}</p>
+              <p class="text-[11px] text-slate-400 truncate">{{ user.email }}</p>
             </div>
           </div>
+
+          <div class="flex gap-2 px-3">
+            <a href="{% url 'accounts:profile' %}" class="flex-1 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">Profile</a>
+            <form method="post" action="{% url 'accounts:logout' %}" class="flex-1">
+              {% csrf_token %}
+              <button type="submit" class="w-full text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-500 py-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">Logout</button>
+            </form>
+          </div>
+        </div>
+      </aside>
+      {% endif %}
+
+      <!-- ==================== MAIN CONTENT ==================== -->
+      <div class="flex-1 flex flex-col min-h-screen {% if user.is_authenticated %}lg:ml-0{% endif %}">
+
+        <!-- Top bar (mobile hamburger + notifications) -->
+        <header class="sticky top-0 z-30 flex items-center justify-between px-4 py-3 lg:px-8 border-b border-slate-200 dark:border-slate-800/60 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl">
+          <div class="flex items-center gap-3">
+            {% if user.is_authenticated %}
+            <button id="hamburger" onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              <svg class="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            {% endif %}
+            <h2 class="text-lg font-bold tracking-tight">{% block page_title %}Dashboard{% endblock %}</h2>
+          </div>
+
+          <div class="flex items-center gap-2">
+            {% if user.is_authenticated %}
+            <!-- Notifications -->
+            <a href="{% url 'notifications:list' %}" class="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              <svg class="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+              <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 h-4 w-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center"></span>
+            </a>
+            {% else %}
+            <!-- Guest nav -->
+            <a href="{% url 'properties:public_listings' %}" class="text-[13px] font-medium text-slate-500 hover:text-brand-600 transition-colors px-3 py-2">Browse</a>
+            <a href="{% url 'accounts:login' %}" class="text-[13px] font-medium text-slate-500 hover:text-brand-600 transition-colors px-3 py-2">Login</a>
+            <a href="{% url 'accounts:signup' %}" class="rounded-lg bg-brand-600 px-4 py-2 text-[13px] font-bold text-white hover:bg-brand-700 transition-all shadow-md shadow-brand-500/20">Get Started</a>
+            {% endif %}
+          </div>
+        </header>
+
+        <!-- Page content -->
+        <main class="flex-1">
+          {% if messages %}
+          <div class="px-4 lg:px-8 pt-4">
+            {% for message in messages %}
+            <div class="p-3.5 mb-3 rounded-xl text-[13px] font-medium {% if message.tags == 'error' %}bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50{% elif message.tags == 'warning' %}bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50{% else %}bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50{% endif %}">
+              {{ message }}
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
           
-          <div class="flex items-center gap-6">
-            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-500 dark:text-slate-400">
-              {% if user.is_authenticated %}
-              <a href="{% url 'core:dashboard' %}" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Dashboard</a>
-              <a href="{% url 'properties:building_list' %}" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Properties</a>
-              <a href="{% url 'payments:list' %}" class="py-2 px-1 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400 transition-all border-b-2 border-transparent hover:border-brand-500">Payments</a>
-              {% if request.user.is_owner %}
-              <a href="{% url 'payments:finances' %}" class="py-2 px-1 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400 transition-all border-b-2 border-transparent hover:border-brand-500">Finances</a>
-              {% endif %}
-              <a href="{% url 'issues:list' %}" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors uppercase tracking-widest text-[11px] font-bold">Issues</a>
-              <a href="{% url 'chatapp:list' %}" class="py-2 px-1 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400 transition-all border-b-2 border-transparent hover:border-brand-500">Messages</a>
-              {% if user.is_tenant %}
-              <a href="{% url 'properties:search' %}" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Find Apt</a>
-              {% endif %}
-              {% endif %}
-            </nav>
+          <div class="px-4 py-6 lg:px-8 lg:py-8 animate-slide-up">
+            {% block content %}{% endblock %}
+          </div>
+        </main>
 
-            <div class="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
-
-            <div class="flex items-center gap-3">
-              <button id="theme-toggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-900 hover:ring-2 ring-slate-200 dark:ring-slate-800 transition-all">
-                <!-- Sun Icon -->
-                <svg id="sun-icon" class="w-5 h-5 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.05 16.05l.707.707M7.757 7.757l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
-                <!-- Moon Icon -->
-                <svg id="moon-icon" class="w-5 h-5 block dark:hidden text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-              </button>
-
-              {% if user.is_authenticated %}
-              <!-- Notification Bell -->
-              <a href="{% url 'notifications:list' %}" class="relative p-2 rounded-lg bg-slate-100 dark:bg-slate-900 hover:ring-2 ring-slate-200 dark:ring-slate-800 transition-all">
-                <svg class="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                <span id="notif-badge" class="hidden absolute -top-1 -right-1 h-4 w-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center"></span>
-              </a>
-              <!-- Profile -->
-              <div class="flex items-center gap-2">
-                <a href="{% url 'accounts:profile' %}" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                  <div class="h-8 w-8 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold">
-                    {{ user.full_name|slice:":1" }}
-                  </div>
-                  <span class="text-sm font-semibold hidden lg:block">{{ user.full_name }}</span>
-                </a>
-                <form method="post" action="{% url 'accounts:logout' %}" class="inline">
-                  {% csrf_token %}
-                  <button type="submit" class="text-sm font-medium text-slate-400 hover:text-rose-500 transition-colors ml-2">Logout</button>
-                </form>
-              </div>
-              {% else %}
-              <a href="{% url 'accounts:login' %}" class="text-sm font-medium hover:text-brand-600 transition-colors">Login</a>
-              <a href="{% url 'accounts:signup' %}" class="rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white hover:bg-brand-700 transition-all shadow-lg shadow-brand-500/25">Get Started</a>
-              {% endif %}
+        <!-- Footer -->
+        <footer class="border-t border-slate-200 dark:border-slate-800/60 py-5">
+          <div class="px-4 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-[11px] font-medium text-slate-400 dark:text-slate-600">
+            <p>© 2026 Edge Ventures · Property Suite</p>
+            <div class="flex gap-5">
+              <a href="#" class="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Privacy</a>
+              <a href="#" class="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Terms</a>
+              <a href="#" class="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Support</a>
             </div>
           </div>
-        </div>
-      </header>
-
-      <main class="flex-grow">
-        {% if messages %}
-        <div class="mx-auto max-w-7xl px-4 mt-6 lg:px-8">
-          {% for message in messages %}
-          <div class="p-4 mb-4 rounded-xl {% if message.tags == 'error' %}bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border border-rose-200 dark:border-rose-800{% else %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800{% endif %}">
-            {{ message }}
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-        
-        <div class="mx-auto max-w-7xl px-4 py-10 lg:px-8 animate-slide-up">
-          {% block content %}{% endblock %}
-        </div>
-      </main>
-
-      <footer class="border-t border-slate-200 dark:border-slate-800 py-8">
-        <div class="mx-auto max-w-7xl px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-400 uppercase tracking-widest">
-          <p>© 2026 Edge Ventures Property Management</p>
-          <div class="flex gap-6">
-            <a href="#" class="hover:text-slate-600 dark:hover:text-slate-200">Privacy</a>
-            <a href="#" class="hover:text-slate-600 dark:hover:text-slate-200">Terms</a>
-            <a href="#" class="hover:text-slate-600 dark:hover:text-slate-200">Support</a>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
 
     <script>
-      const themeToggle = document.getElementById('theme-toggle');
-      const html = document.documentElement;
+      // ---- Dark mode toggle (fixed) ----
+      (function() {
+        const toggle = document.getElementById('theme-toggle');
+        if (!toggle) return;
+        const html = document.documentElement;
 
-      // Check for saved theme or default to dark
-      if (localStorage.theme === 'light') {
-        html.classList.remove('dark');
-        html.classList.add('light');
-      } else {
-        html.classList.add('dark');
-        localStorage.theme = 'dark';
+        toggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            html.classList.add('light');
+            localStorage.setItem('theme', 'light');
+          } else {
+            html.classList.remove('light');
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+          }
+        });
+      })();
+
+      // Re-attach after HTMX swap
+      document.body.addEventListener('htmx:afterSettle', function() {
+        const toggle = document.getElementById('theme-toggle');
+        if (!toggle) return;
+        const html = document.documentElement;
+        // Remove old listeners by cloning
+        const newToggle = toggle.cloneNode(true);
+        toggle.parentNode.replaceChild(newToggle, toggle);
+        newToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            html.classList.add('light');
+            localStorage.setItem('theme', 'light');
+          } else {
+            html.classList.remove('light');
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+          }
+        });
+      });
+
+      // ---- Mobile sidebar toggle ----
+      function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (!sidebar) return;
+        sidebar.classList.toggle('-translate-x-full');
+        if (overlay) overlay.classList.toggle('hidden');
       }
 
-      themeToggle.addEventListener('click', () => {
-        if (html.classList.contains('dark')) {
-          html.classList.remove('dark');
-          html.classList.add('light');
-          localStorage.theme = 'light';
-        } else {
-          html.classList.add('dark');
-          html.classList.remove('light');
-          localStorage.theme = 'dark';
-        }
-      });
+      // ---- Active nav highlighting ----
+      (function() {
+        const path = window.location.pathname;
+        document.querySelectorAll('.nav-link').forEach(link => {
+          const href = link.getAttribute('href');
+          if (href && path.startsWith(href) && href !== '/') {
+            link.classList.add('active');
+          } else if (href === '/' && path === '/') {
+            link.classList.add('active');
+          }
+        });
+      })();
     </script>
   </body>
 </html>

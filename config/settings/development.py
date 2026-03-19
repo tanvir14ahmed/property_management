@@ -4,4 +4,5 @@ from .base import *
 
 DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+import os
+EMAIL_BACKEND = os.getenv("DJANGO_EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")

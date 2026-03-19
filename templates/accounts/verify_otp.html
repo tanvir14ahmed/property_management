@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-md mx-auto space-y-8 animate-slide-up">
+  <div class="text-center">
+    <div class="h-16 w-16 bg-brand-100 dark:bg-brand-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    </div>
+    <h2 class="text-2xl font-black tracking-tight">Check your email</h2>
+    <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">We sent a 4-digit code to <span class="font-bold text-slate-700 dark:text-slate-200">{{ registration.email }}</span></p>
+  </div>
+
+  <div class="glass border border-slate-200 dark:border-slate-800 rounded-3xl p-8">
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+      
+      <div>
+        <label for="id_otp_code" class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 text-center">Enter Verification Code</label>
+        {{ form.otp_code }}
+        {% if form.otp_code.errors %}
+          <p class="text-rose-500 text-xs font-semibold mt-2 text-center">{{ form.otp_code.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="w-full flex items-center justify-center py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/25 transition-all">
+        Verify & Continue
+      </button>
+    </form>
+
+    <div class="mt-8 text-center pt-6 border-t border-slate-100 dark:border-slate-800">
+      <p class="text-xs text-slate-500">Didn't receive the code?</p>
+      <a href="{% url 'accounts:signup' %}" class="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline mt-1 inline-block">Start registration again</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -270,17 +270,64 @@ class FinancialDashboardView(LoginRequiredMixin, ListView):
         context["net_profit"] = revenue - expenses_total
         context["expenses_list"] = expenses_qs[:10] # Recent 10
         
+        # Chart Data Aggregation (Last 6 Months)
+        import json
+        import datetime
+        from django.db.models.functions import TruncMonth
+        
+        today = timezone.now().date()
+        months = []
+        for i in range(5, -1, -1):
+            m = today.month - i
+            y = today.year
+            if m <= 0:
+                m += 12
+                y -= 1
+            months.append(datetime.date(y, m, 1))
+            
+        six_months_ago = months[0]
+        
+        rev_data = (
+            self.get_queryset()
+            .filter(updated_at__date__gte=six_months_ago)
+            .annotate(month=TruncMonth('updated_at'))
+            .values('month')
+            .annotate(total=Sum('amount'))
+            .order_by('month')
+        )
+        
+        exp_data = (
+            expenses_qs
+            .filter(date__gte=six_months_ago)
+            .annotate(month=TruncMonth('date'))
+            .values('month')
+            .annotate(total=Sum('amount'))
+            .order_by('month')
+        )
+
+        labels = []
+        rev_values = []
+        exp_values = []
+        
+        for curr in months:
+            labels.append(curr.strftime("%b %Y"))
+            r_val = next((float(x['total']) for x in rev_data if x['month'] and x['month'].year == curr.year and x['month'].month == curr.month), 0.0)
+            rev_values.append(r_val)
+            e_val = next((float(x['total']) for x in exp_data if x['month'] and x['month'].year == curr.year and x['month'].month == curr.month), 0.0)
+            exp_values.append(e_val)
+            
+        context["chart_labels"] = json.dumps(labels)
+        context["chart_revenue"] = json.dumps(rev_values)
+        context["chart_expenses"] = json.dumps(exp_values)
+        
         # PDF generation link parameter (placeholder for now)
         context["report_date"] = timezone.now().date()
         
-        return context
-
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        # Apartment map for modal/forms
         from properties.models import Apartment
-        apartments = Apartment.objects.filter(building__owner=self.request.user).values("id", "building_id", "apartment_name", "apartment_code")
+        apartments = Apartment.objects.filter(building__owner=user).values("id", "building_id", "apartment_name", "apartment_code")
         context["apartment_map"] = list(apartments)
+        
         return context
 
 

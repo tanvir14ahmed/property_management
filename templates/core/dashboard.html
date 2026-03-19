@@ -87,7 +87,13 @@
   <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
     <div class="flex items-center justify-between mb-6">
       <h3 class="font-bold text-lg">Recent Activity</h3>
-      <a href="{% url 'notifications:list' %}" class="text-xs font-bold text-brand-600 dark:text-brand-400 hover:opacity-80">View all →</a>
+      <div class="flex items-center gap-4">
+        <form method="post" action="{% url 'notifications:clear_read' %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">Clear Read</button>
+        </form>
+        <a href="{% url 'notifications:list' %}" class="text-xs font-bold text-brand-600 dark:text-brand-400 hover:opacity-80">View all →</a>
+      </div>
     </div>
     {% if recent_notifications %}
     <div class="space-y-3">

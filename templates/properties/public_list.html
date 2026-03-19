@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-8 animate-slide-up">
+  <!-- Header Section -->
+  <div class="glass border border-slate-200 dark:border-slate-800 rounded-3xl p-8 relative overflow-hidden">
+    <div class="absolute -top-12 -right-12 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl"></div>
+    <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div>
+        <h2 class="text-3xl font-black tracking-tight">Available Apartments</h2>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">Find your next home in our premium properties.</p>
+      </div>
+      <form method="get" class="flex gap-2 w-full md:w-auto">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search by city or building..." class="w-full md:w-64 rounded-xl border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 px-4 py-2 text-sm focus:border-brand-500 focus:ring-brand-500">
+        <button type="submit" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/25 transition-all">Search</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Listings Grid -->
+  {% if apartments %}
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for appt in apartments %}
+    <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:border-brand-400 dark:hover:border-brand-600 transition-all hover-lift flex flex-col">
+      <!-- Placeholder Image -->
+      <div class="h-48 bg-slate-200 dark:bg-slate-800 relative">
+        <div class="absolute top-3 right-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-brand-600 dark:text-brand-400 shadow-sm">
+          Available
+        </div>
+        <div class="w-full h-full flex items-center justify-center text-slate-400">
+          <svg class="w-12 h-12 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+      </div>
+      
+      <div class="p-5 flex flex-col flex-grow">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <h3 class="font-bold text-lg leading-tight">{{ appt.apartment_name }}</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ appt.building.building_name }} • {{ appt.building.city }}</p>
+          </div>
+          {% if appt.rent_amount %}
+          <div class="text-right">
+            <p class="font-black text-brand-600 dark:text-brand-400">${{ appt.rent_amount }}</p>
+            <p class="text-[10px] uppercase tracking-widest text-slate-400">/ month</p>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="flex gap-4 mt-4 mb-6">
+          {% if appt.bedrooms %}
+          <div class="flex flex-col">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Beds</span>
+            <span class="font-semibold">{{ appt.bedrooms }}</span>
+          </div>
+          {% endif %}
+          {% if appt.bathrooms %}
+          <div class="flex flex-col">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Baths</span>
+            <span class="font-semibold">{{ appt.bathrooms }}</span>
+          </div>
+          {% endif %}
+          {% if appt.square_feet %}
+          <div class="flex flex-col">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sq Ft</span>
+            <span class="font-semibold">{{ appt.square_feet }}</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="mt-auto">
+          {% if request.user.is_authenticated %}
+            {% if request.user.is_tenant %}
+              <a href="{% url 'properties:search' %}?mode=apartment&code={{ appt.apartment_code }}" class="block w-full text-center px-4 py-2 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:hover:bg-brand-900/40 text-brand-700 dark:text-brand-300 rounded-xl font-bold text-sm transition-colors">
+                Apply to Join
+              </a>
+            {% else %}
+              <div class="block w-full text-center px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl font-bold text-sm">
+                Login as Tenant to Apply
+              </div>
+            {% endif %}
+          {% else %}
+            <a href="{% url 'accounts:login' %}?next={% url 'properties:search' %}?mode=apartment&code={{ appt.apartment_code }}" class="block w-full text-center px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl font-bold text-sm transition-colors">
+              Login to Apply
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-16 glass border border-slate-200 dark:border-slate-800 rounded-3xl">
+    <div class="inline-flex h-16 w-16 mb-4 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900 text-slate-400">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    </div>
+    <h3 class="text-xl font-bold mb-2">No apartments available</h3>
+    <p class="text-slate-500 dark:text-slate-400">Check back later or try adjusting your search.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

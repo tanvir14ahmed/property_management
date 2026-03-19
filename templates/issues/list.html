@@ -6,12 +6,20 @@
       <h2 class="text-2xl font-bold">Issues & Maintenance</h2>
       <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">{% if request.user.is_tenant %}Track and manage your reported issues{% else %}Review and respond to tenant complaints{% endif %}</p>
     </div>
-    {% if request.user.is_tenant %}
-    <a href="{% url 'issues:create' %}" class="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/25 transition-all">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      Report Issue
-    </a>
-    {% endif %}
+    <div class="flex gap-3">
+      {% if request.user.is_owner %}
+      <a href="{% url 'issues:vendor_list' %}" class="flex items-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl font-bold text-sm transition-all">
+        <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37..."></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Vendors
+      </a>
+      {% endif %}
+      {% if request.user.is_tenant %}
+      <a href="{% url 'issues:create' %}" class="flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/25 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Report Issue
+      </a>
+      {% endif %}
+    </div>
   </div>
 
   <!-- Active Issues -->
@@ -29,7 +37,7 @@
             <th class="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Issue Details</th>
             <th class="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Priority</th>
             <th class="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</th>
-            <th class="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Actions</th>
+            <th class="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -43,6 +51,12 @@
                 <span class="text-slate-300 dark:text-slate-700">•</span>
                 <p class="text-[11px] text-slate-400 font-medium">Raised {{ issue.created_at|timesince }} ago</p>
               </div>
+              {% if issue.vendor %}
+              <div class="mt-2 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                Assigned: {{ issue.vendor.name }}
+              </div>
+              {% endif %}
             </td>
             <td class="px-6 py-4">
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
@@ -61,12 +75,15 @@
                 {{ issue.get_status_display }}
               </span>
             </td>
-            <td class="px-6 py-4 text-center">
+            <td class="px-6 py-4 text-center min-w-[120px]">
               {% if request.user.is_owner and issue.status != 'resolved' %}
-              <a href="{% url 'issues:resolve' issue.pk %}" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all">Mark Resolved</a>
+              <div class="flex flex-col gap-2 items-center">
+                <a href="{% url 'issues:resolve' issue.pk %}" class="w-full px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all">Mark Resolved</a>
+                <a href="{% url 'issues:assign_vendor' issue.pk %}" class="w-full px-3 py-1.5 {% if issue.vendor %}bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400{% else %}bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400{% endif %} hover:opacity-80 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all">{% if issue.vendor %}Change Vendor{% else %}Assign Vendor{% endif %}</a>
+              </div>
               {% elif request.user.is_tenant and issue.status == 'resolved' %}
-              <div class="flex items-center justify-center gap-2">
-                <a href="{% url 'issues:approve' issue.pk %}" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all">Approve</a>
+              <div class="flex flex-col items-center justify-center gap-2">
+                <a href="{% url 'issues:approve' issue.pk %}" class="w-full px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all">Approve Fix</a>
                 <span class="text-[10px] text-slate-400">Awaiting your approval</span>
               </div>
               {% else %}

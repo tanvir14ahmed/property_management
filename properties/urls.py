@@ -7,6 +7,9 @@ from . import views
 app_name = "properties"
 
 urlpatterns = [
+    # Public Listings
+    path("listings/", views.PublicListingView.as_view(), name="public_listings"),
+    
     # Buildings
     path("buildings/", views.BuildingListView.as_view(), name="building_list"),
     path("buildings/new/", views.BuildingCreateView.as_view(), name="building_create"),
@@ -17,6 +20,7 @@ urlpatterns = [
     path("buildings/<int:building_pk>/apartments/new/", views.ApartmentCreateView.as_view(), name="apartment_create"),
     path("apartments/<int:pk>/", views.ApartmentDetailView.as_view(), name="apartment_detail"),
     path("apartments/<int:pk>/edit/", views.ApartmentUpdateView.as_view(), name="apartment_edit"),
+    path("occupancies/<int:pk>/upload-lease/", views.UploadLeaseView.as_view(), name="upload_lease"),
 
     # Join Requests (Owner side)
     path("join-requests/", views.JoinRequestListView.as_view(), name="join_request_list"),

@@ -50,6 +50,14 @@
     </div>
   </div>
 
+  <!-- Cash Flow Chart -->
+  <div class="glass border border-slate-200 dark:border-slate-800 rounded-3xl p-8 mb-2">
+    <h3 class="text-xl font-bold mb-6">Cash Flow Overview</h3>
+    <div class="relative w-full h-80">
+      <canvas id="cashFlowChart"></canvas>
+    </div>
+  </div>
+
   <div class="grid lg:grid-cols-2 gap-8">
     <!-- Recent Movements -->
     <div class="glass border border-slate-200 dark:border-slate-800 rounded-3xl p-8">
@@ -92,4 +100,76 @@
     </div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function() {
+    let myChart = null;
+
+    function initChart() {
+      const canvas = document.getElementById('cashFlowChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      if (myChart) {
+        myChart.destroy();
+      }
+
+      const labels = JSON.parse('{{ chart_labels|escapejs }}');
+      const revenueData = JSON.parse('{{ chart_revenue|escapejs }}');
+      const expensesData = JSON.parse('{{ chart_expenses|escapejs }}');
+      
+      myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Revenue',
+              data: revenueData,
+              backgroundColor: 'rgba(5, 150, 105, 0.8)', // emerald-600
+              borderRadius: 6,
+            },
+            {
+              label: 'Expenses',
+              data: expensesData,
+              backgroundColor: 'rgba(225, 29, 72, 0.8)', // rose-600
+              borderRadius: 6,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '$' + value;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Initial load
+    initChart();
+
+    // HTMX afterSettle (for boosted navigation)
+    document.body.addEventListener('htmx:afterSettle', function(evt) {
+      if (evt.detail.target.querySelector('#cashFlowChart')) {
+        initChart();
+      }
+    });
+  })();
+</script>
 {% endblock %}

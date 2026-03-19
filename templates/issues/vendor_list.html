@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-8 animate-slide-up">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-3xl font-black tracking-tight">Vendor Management</h2>
+      <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage your trusted service professionals.</p>
+    </div>
+    <div class="flex gap-3">
+      <a href="{% url 'issues:list' %}" class="px-5 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-900 transition-all">Back to Issues</a>
+      <a href="{% url 'issues:vendor_create' %}" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/25 transition-all">+ Add Vendor</a>
+    </div>
+  </div>
+
+  {% if vendors %}
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for vendor in vendors %}
+    <div class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:border-brand-400 dark:hover:border-brand-600 transition-all hover-lift">
+      <div class="flex justify-between items-start mb-4">
+        <div class="h-12 w-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+          <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <a href="{% url 'issues:vendor_edit' vendor.pk %}" class="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline">Edit</a>
+      </div>
+      <h3 class="font-bold text-lg leading-tight">{{ vendor.name }}</h3>
+      <p class="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400 mb-4">{{ vendor.specialty }}</p>
+      
+      <div class="space-y-2 text-sm text-slate-500 dark:text-slate-400">
+        {% if vendor.phone_number %}
+        <p class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          {{ vendor.phone_number }}
+        </p>
+        {% endif %}
+        {% if vendor.email %}
+        <p class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          {{ vendor.email }}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-16 glass border border-slate-200 dark:border-slate-800 rounded-3xl">
+    <div class="inline-flex h-16 w-16 mb-4 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900 text-slate-400">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+    </div>
+    <h3 class="text-xl font-bold mb-2">No vendors added</h3>
+    <p class="text-slate-500 dark:text-slate-400 mb-6">Build your trusted contacts list to assign issues faster.</p>
+    <a href="{% url 'issues:vendor_create' %}" class="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-bold text-sm">Add First Vendor</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

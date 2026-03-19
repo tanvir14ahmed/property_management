@@ -29,6 +29,12 @@ def mark_all_read(request):
     return redirect("notifications:list")
 
 
+def clear_read_notifications(request):
+    if request.method == "POST":
+        Notification.objects.filter(user=request.user, is_read=True).delete()
+    return redirect(request.META.get("HTTP_REFERER", "notifications:list"))
+
+
 def unread_count_api(request):
     if not request.user.is_authenticated:
         return JsonResponse({"count": 0})

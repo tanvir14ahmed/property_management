@@ -114,12 +114,14 @@ LOGIN_REDIRECT_URL = "core:dashboard"
 LOGOUT_REDIRECT_URL = "accounts:login"
 
 EMAIL_BACKEND = os.getenv("DJANGO_EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
-EMAIL_HOST = os.getenv("DJANGO_EMAIL_HOST", "localhost")
-EMAIL_PORT = int(os.getenv("DJANGO_EMAIL_PORT", "25"))
+EMAIL_HOST = os.getenv("DJANGO_EMAIL_HOST", "mail.codelab-by-tnv.top")
+EMAIL_PORT = int(os.getenv("DJANGO_EMAIL_PORT", "465"))
 EMAIL_USE_TLS = os.getenv("DJANGO_EMAIL_USE_TLS", "False").lower() in {"1", "true", "yes"}
-EMAIL_HOST_USER = os.getenv("DJANGO_EMAIL_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("DJANGO_EMAIL_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.getenv("DJANGO_DEFAULT_FROM_EMAIL", "noreply@propertyapp.local")
+EMAIL_USE_SSL = os.getenv("DJANGO_EMAIL_USE_SSL", "True").lower() in {"1", "true", "yes"}
+EMAIL_HOST_USER = "no-reply@codelab-by-tnv.top"
+EMAIL_HOST_PASSWORD = "Lifeis1*exam"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_TIMEOUT = 10  # Seconds
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"

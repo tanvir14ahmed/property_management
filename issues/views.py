@@ -62,3 +62,61 @@ def approve_issue(request, pk):
     issue.notify_solved()
     messages.success(request, f"Issue '{issue.title}' confirmed as solved.")
     return redirect("issues:list")
+
+
+from django.views.generic import UpdateView
+
+class IssueAssignVendorView(LoginRequiredMixin, UpdateView):
+    model = Issue
+    from .forms import IssueAssignVendorForm
+    form_class = IssueAssignVendorForm
+    template_name = "issues/assign_vendor_form.html"
+    success_url = reverse_lazy("issues:list")
+
+    def get_queryset(self):
+        return Issue.objects.filter(owner=self.request.user)
+        
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["owner"] = self.request.user
+        return kwargs
+        
+    def form_valid(self, form):
+        messages.success(self.request, "Vendor assigned to issue.")
+        return super().form_valid(form)
+
+
+from .models import Vendor
+from .forms import VendorForm
+
+class VendorListView(LoginRequiredMixin, ListView):
+    model = Vendor
+    template_name = "issues/vendor_list.html"
+    context_object_name = "vendors"
+
+    def get_queryset(self):
+        return Vendor.objects.filter(owner=self.request.user)
+
+class VendorCreateView(LoginRequiredMixin, CreateView):
+    model = Vendor
+    form_class = VendorForm
+    template_name = "issues/vendor_form.html"
+    success_url = reverse_lazy("issues:vendor_list")
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        messages.success(self.request, "Vendor added.")
+        return super().form_valid(form)
+
+class VendorUpdateView(LoginRequiredMixin, UpdateView):
+    model = Vendor
+    form_class = VendorForm
+    template_name = "issues/vendor_form.html"
+    success_url = reverse_lazy("issues:vendor_list")
+
+    def get_queryset(self):
+        return Vendor.objects.filter(owner=self.request.user)
+
+    def form_valid(self, form):
+        messages.success(self.request, "Vendor updated.")
+        return super().form_valid(form)

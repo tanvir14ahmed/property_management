@@ -33,3 +33,11 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ["full_name", "phone_number"]
+
+
+class OTPVerifyForm(forms.Form):
+    otp_code = forms.CharField(max_length=4, min_length=4, widget=forms.TextInput(attrs={
+        'class': 'w-full rounded-xl border-slate-200 dark:border-slate-800 bg-transparent px-4 py-3 text-2xl font-black text-center tracking-[1em] focus:border-brand-500 focus:ring-brand-500',
+        'placeholder': '0000',
+        'autocomplete': 'one-time-code'
+    }))

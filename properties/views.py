@@ -23,6 +23,26 @@ class OwnerRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+# ─── Public Listings ────────────────────────────────────────────────────────────
+
+class PublicListingView(ListView):
+    model = Apartment
+    template_name = "properties/public_list.html"
+    context_object_name = "apartments"
+
+    def get_queryset(self):
+        q = self.request.GET.get("q", "").strip()
+        qs = Apartment.objects.filter(is_active=True, is_occupied=False).select_related("building")
+        if q:
+            qs = qs.filter(Q(building__city__icontains=q) | Q(apartment_name__icontains=q) | Q(building__building_name__icontains=q))
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["q"] = self.request.GET.get("q", "")
+        return ctx
+
+
 # ─── Buildings ────────────────────────────────────────────────────────────────
 
 class BuildingListView(LoginRequiredMixin, ListView):
@@ -149,6 +169,28 @@ class ApartmentUpdateView(OwnerRequiredMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, "Apartment updated.")
         return super().form_valid(form)
+
+
+class UploadLeaseView(OwnerRequiredMixin, UpdateView):
+    model = ApartmentOccupancy
+    fields = ["lease_document"]
+    template_name = "properties/lease_form.html"
+
+    def get_queryset(self):
+        return ApartmentOccupancy.objects.filter(apartment__building__owner=self.request.user)
+
+    def get_success_url(self):
+        return reverse_lazy("properties:apartment_detail", kwargs={"pk": self.object.apartment.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, "Lease document uploaded successfully.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["apartment"] = self.object.apartment
+        ctx["tenant"] = self.object.tenant
+        return ctx
 
 
 # ─── Tenant Join Request Actions ──────────────────────────────────────────────
