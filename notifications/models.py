@@ -27,5 +27,33 @@ class Notification(models.Model):
         self.read_at = timezone.now()
         self.save(update_fields=("is_read", "read_at"))
 
+    def get_target_url(self):
+        """Returns the URL this notification should point to."""
+        if not self.related_object:
+            return None
+        
+        try:
+            # Handle different content types
+            model_name = self.related_object_type.model
+            if model_name == 'issue':
+                from django.urls import reverse
+                return reverse('issues:list')
+            elif model_name == 'tenantjoinrequest':
+                from django.urls import reverse
+                return reverse('properties:building_detail', kwargs={'pk': self.related_object.building.pk})
+            elif model_name == 'paymentrequest':
+                from django.urls import reverse
+                return reverse('payments:list')
+            elif model_name == 'apartment':
+                from django.urls import reverse
+                return reverse('properties:apartment_detail', kwargs={'pk': self.related_object.pk})
+            
+            # Default fallback to absolute url if exists
+            if hasattr(self.related_object, 'get_absolute_url'):
+                return self.related_object.get_absolute_url()
+        except Exception:
+            pass
+        return None
+
     def __str__(self) -> str:
         return f"{self.title} → {self.user.email}"

@@ -27,7 +27,7 @@
         <svg class="w-16 h-16 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
       </div>
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Total Revenue</p>
-      <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400">${{ revenue_total|floatformat:2 }}</p>
+      <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400">৳{{ revenue_total|floatformat:2 }}</p>
       <p class="text-xs text-slate-500 mt-2">Approved payments only</p>
     </div>
 
@@ -36,7 +36,7 @@
         <svg class="w-16 h-16 text-rose-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
       </div>
       <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Total Expenses</p>
-      <p class="text-3xl font-black text-rose-600 dark:text-rose-400">${{ expenses_total|floatformat:2 }}</p>
+      <p class="text-3xl font-black text-rose-600 dark:text-rose-400">৳{{ expenses_total|floatformat:2 }}</p>
       <p class="text-xs text-slate-500 mt-2">Maintenance & utilities</p>
     </div>
 
@@ -45,7 +45,7 @@
         <svg class="w-16 h-16 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"></path></svg>
       </div>
       <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-1">Net Profit</p>
-      <p class="text-3xl font-black text-brand-600 dark:text-brand-400">${{ net_profit|floatformat:2 }}</p>
+      <p class="text-3xl font-black text-brand-600 dark:text-brand-400">৳{{ net_profit|floatformat:2 }}</p>
       <p class="text-xs text-slate-500 mt-2">Revenue - Expenses</p>
     </div>
   </div>
@@ -70,7 +70,7 @@
             <p class="font-bold text-sm">{{ pr.title }}</p>
             <p class="text-xs text-slate-400">{{ pr.apartment.apartment_name }} ({{ pr.apartment.apartment_code }}) · {{ pr.updated_at|date:"M d" }}</p>
           </div>
-          <p class="text-emerald-600 font-bold text-sm">+${{ pr.amount }}</p>
+          <p class="text-emerald-600 font-bold text-sm">+৳{{ pr.amount }}</p>
         </div>
         {% endfor %}
       </div>
@@ -90,7 +90,7 @@
             <p class="font-bold text-sm">{{ exp.title }}</p>
             <p class="text-xs text-slate-400">{{ exp.get_expense_type_display }} · {{ exp.date }}</p>
           </div>
-          <p class="text-rose-600 font-bold text-sm">-${{ exp.amount }}</p>
+          <p class="text-rose-600 font-bold text-sm">-৳{{ exp.amount }}</p>
         </div>
         {% endfor %}
       </div>
@@ -101,7 +101,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   (function() {
@@ -152,7 +151,7 @@
               beginAtZero: true,
               ticks: {
                 callback: function(value) {
-                  return '$' + value;
+                  return '৳' + value;
                 }
               }
             }

@@ -138,7 +138,7 @@
             </td>
             <td class="px-6 py-4 text-right">
               <p class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">{{ issue.resolved_at|date:"M d, Y" }}</p>
-              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em] mt-0.5">{{ issue.resolved_at|timesince }} after raise</p>
+              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em] mt-0.5">{{ issue.created_at|timesince:issue.resolved_at }} after raise</p>
             </td>
           </tr>
           {% endif %}

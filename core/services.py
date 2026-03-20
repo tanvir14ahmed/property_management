@@ -44,3 +44,17 @@ def create_notification(message: str, user: models.Model, related: models.Model 
         related_object_type=content_type,
         related_object_id=object_id,
     )
+
+    # Broadcast to Channels
+    from asgiref.sync import async_to_sync
+    from channels.layers import get_channel_layer
+    channel_layer = get_channel_layer()
+    unread_count = Notification.objects.filter(user=user, is_read=False).count()
+    async_to_sync(channel_layer.group_send)(
+        f"user_notifications_{user.id}",
+        {
+            "type": "send_notification",
+            "message": message,
+            "unread_count": unread_count,
+        }
+    )

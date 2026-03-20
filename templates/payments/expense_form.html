@@ -37,7 +37,7 @@
           {{ form.expense_type }}
         </div>
         <div>
-          <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Amount ($)</label>
+          <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Amount (৳)</label>
           {{ form.amount }}
         </div>
         <div>
@@ -99,7 +99,7 @@
       filtered.forEach(apt => {
         const opt = document.createElement('option');
         opt.value = apt.id;
-        opt.textContent = `${apt.apartment_name} (${apt.apartment_code})`;
+        opt.textContent = `৳{apt.apartment_name} (৳{apt.apartment_code})`;
         if (apt.id == currentAptId) opt.selected = true;
         apartmentSelect.appendChild(opt);
       });

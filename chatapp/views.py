@@ -76,6 +76,40 @@ class ChatRoomView(LoginRequiredMixin, TemplateView):
             msg.conversation = self.conversation
             msg.save()
             
+            # Render the message HTML
+            from django.template.loader import render_to_string
+            message_html = render_to_string("chatapp/partials/single_message.html", {"msg": msg, "user": request.user})
+            
+            # Broadcast to Channels
+            from asgiref.sync import async_to_sync
+            from channels.layers import get_channel_layer
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"chat_{self.apartment.pk}",
+                {
+                    "type": "chat_message",
+                    "message_html": message_html,
+                    "sender_id": msg.sender.id,
+                }
+            )
+
+            # Also broadcast unread message count update to the recipient
+            recipient = self.apartment.building.owner if request.user == self.apartment.active_assignment.tenant else self.apartment.active_assignment.tenant
+            if recipient:
+                # Count messages in all conversations where the recipient is NOT the sender and is_read is False
+                count = Message.objects.filter(
+                    conversation__apartment__is_active=True,
+                    is_read=False
+                ).exclude(sender=recipient).distinct().count() or 0
+                
+                async_to_sync(channel_layer.group_send)(
+                    f"user_notifications_{recipient.id}",
+                    {
+                        "type": "send_notification",
+                        "unread_messages": count,
+                    }
+                )
+            
             if request.headers.get('HX-Request'):
                 return render(request, "chatapp/partials/single_message.html", {"msg": msg})
                 
@@ -88,3 +122,12 @@ class ChatRoomView(LoginRequiredMixin, TemplateView):
         return ApartmentOccupancy.objects.filter(
             apartment=self.apartment, tenant=user, is_active=True
         ).exists()
+def unread_message_count_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"count": 0})
+    # Count messages in all conversations where the user is NOT the sender and is_read is False
+    count = Message.objects.filter(
+        conversation__apartment__is_active=True,
+        is_read=False
+    ).exclude(sender=request.user).distinct().count()
+    return JsonResponse({"count": count})

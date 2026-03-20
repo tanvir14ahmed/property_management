@@ -2,3 +2,7 @@ Django==5.2.6
 mysqlclient
 python-dotenv
 reportlab
+channels
+channels-redis
+django-htmx
+daphne

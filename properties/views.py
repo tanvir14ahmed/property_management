@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView
@@ -239,7 +239,10 @@ def approve_join_request(request, pk):
         related=jr,
     )
 
-    messages.success(request, f"Approved {jr.tenant.full_name} for {jr.apartment.apartment_name}.")
+    if request.headers.get("HX-Request"):
+        pending_requests = TenantJoinRequest.objects.filter(building=jr.building, status="pending").select_related("tenant", "apartment")
+        return render(request, "properties/partials/join_requests.html", {"pending_requests": pending_requests})
+        
     return redirect(request.META.get("HTTP_REFERER", "properties:join_request_list"))
 
 
@@ -261,6 +264,10 @@ def reject_join_request(request, pk):
         jr.tenant,
         related=jr,
     )
+    if request.headers.get("HX-Request"):
+        pending_requests = TenantJoinRequest.objects.filter(building=jr.building, status="pending").select_related("tenant", "apartment")
+        return render(request, "properties/partials/join_requests.html", {"pending_requests": pending_requests})
+
     messages.warning(request, f"Rejected join request from {jr.tenant.full_name}.")
     return redirect(request.META.get("HTTP_REFERER", "properties:join_request_list"))
 

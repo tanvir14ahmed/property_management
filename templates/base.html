@@ -143,9 +143,12 @@
             Issues
           </a>
 
-          <a href="{% url 'chatapp:list' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
-            <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-            Messages
+          <a href="{% url 'chatapp:list' %}" class="nav-link flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+            <div class="flex items-center gap-3">
+              <svg class="w-[18px] h-[18px] text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Messages
+            </div>
+            <span id="msg-badge" class="hidden h-4 w-4 bg-brand-500 text-white text-[9px] font-black rounded-full flex items-center justify-center"></span>
           </a>
 
           <div class="pt-4 pb-2">
@@ -323,5 +326,63 @@
         });
       })();
     </script>
+    
+    {% if user.is_authenticated %}
+    <script>
+      // WebSocket for notifications
+      (function() {
+        const notifBadge = document.getElementById('notif-badge');
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const notifSocket = new WebSocket(
+            wsScheme + '://' + window.location.host + '/ws/notifications/'
+        );
+
+        const updateBadge = (count) => {
+            if (!notifBadge) return;
+            if (count > 0) {
+                notifBadge.textContent = count;
+                notifBadge.classList.remove('hidden');
+            } else {
+                notifBadge.classList.add('hidden');
+            }
+        };
+
+        // ---- Message Badge ----
+        const msgBadge = document.getElementById('msg-badge');
+        const updateMsgBadge = (count) => {
+            if (!msgBadge) return;
+            if (count > 0) {
+                msgBadge.textContent = count;
+                msgBadge.classList.remove('hidden');
+            } else {
+                msgBadge.classList.add('hidden');
+            }
+        };
+
+        // Reuse notification socket for other real-time updates if needed,
+        // or just fetch initial message count.
+        fetch('/chat/api/unread-count/')
+            .then(res => res.json())
+            .then(data => updateMsgBadge(data.count));
+
+        // Listen for message count updates on notification socket
+        const originalOnMessage = notifSocket.onmessage;
+        notifSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.unread_count !== undefined) {
+                updateBadge(data.unread_count);
+            }
+            if (data.unread_messages !== undefined) {
+                updateMsgBadge(data.unread_messages);
+            }
+        };
+
+        // Initial count from API
+        fetch('/notifications/api/unread-count/')
+            .then(res => res.json())
+            .then(data => updateBadge(data.count));
+      })();
+    </script>
+    {% endif %}
   </body>
 </html>

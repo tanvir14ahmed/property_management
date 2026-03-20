@@ -1,0 +1,31 @@
+<div id="recent-activity" class="glass border border-slate-200 dark:border-slate-800 rounded-2xl p-6" hx-get="{% url 'core:dashboard' %}?part=activity" hx-trigger="every 1m">
+  <div class="flex items-center justify-between mb-6">
+    <h3 class="font-bold text-lg">Recent Activity</h3>
+    <div class="flex items-center gap-4">
+      <form method="post" action="{% url 'notifications:clear_read' %}" hx-post="{% url 'notifications:clear_read' %}" hx-target="#recent-activity" hx-swap="outerHTML" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors">Clear Read</button>
+      </form>
+      <a href="{% url 'notifications:list' %}" class="text-xs font-bold text-brand-600 dark:text-brand-400 hover:opacity-80">View all →</a>
+    </div>
+  </div>
+  {% if recent_notifications %}
+  <div class="space-y-3">
+    {% for note in recent_notifications %}
+    <div class="flex items-start gap-4 p-4 rounded-xl {% if not note.is_read %}bg-brand-50/50 dark:bg-brand-900/10 border border-brand-100 dark:border-brand-800/30{% else %}bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800{% endif %}">
+      <div class="h-8 w-8 rounded-xl {% if not note.is_read %}bg-brand-100 dark:bg-brand-900/30{% else %}bg-slate-100 dark:bg-slate-900{% endif %} flex-shrink-0 flex items-center justify-center">
+        <svg class="w-4 h-4 {% if not note.is_read %}text-brand-600 dark:text-brand-400{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold {% if not note.is_read %}text-brand-700 dark:text-brand-300{% endif %}">{{ note.title }}</p>
+        <p class="text-xs text-slate-400 mt-0.5">{{ note.created_at|timesince }} ago</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-8">
+    <p class="text-slate-400 text-sm">No recent activity. All looks good!</p>
+  </div>
+  {% endif %}
+</div>

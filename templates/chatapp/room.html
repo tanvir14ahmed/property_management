@@ -33,22 +33,18 @@
 
   <!-- Messages Area -->
   <div id="chat-messages" 
-       class="flex-grow glass border-x border-slate-200 dark:border-slate-800 p-8 overflow-y-auto flex flex-col gap-6 custom-scrollbar bg-slate-50/30 dark:bg-slate-900/30"
-       hx-get="?poll=1" 
-       hx-trigger="every 5s" 
-       hx-swap="innerHTML">
+       class="flex-grow glass border-x border-slate-200 dark:border-slate-800 p-8 overflow-y-auto flex flex-col gap-6 custom-scrollbar bg-slate-50/30 dark:bg-slate-900/30">
     {% include "chatapp/partials/message_list.html" %}
   </div>
 
   <!-- Message Input -->
   <div class="glass border border-slate-200 dark:border-slate-800 rounded-b-[2.5rem] p-6 shadow-2xl z-10">
     <form hx-post="." 
-          hx-target="#chat-messages" 
-          hx-swap="beforeend"
-          hx-on::after-request="this.reset(); scrollToBottom()"
+          hx-swap="none"
+          hx-on::after-request="this.reset();"
           class="flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-2xl focus-within:ring-2 ring-brand-500 transition-all">
       {% csrf_token %}
-      <input type="text" name="message_text" placeholder="Draft a message..." class="flex-1 px-5 py-3 bg-transparent outline-none text-sm font-medium" autocomplete="off" required>
+      <input type="text" name="message_text" id="chat-input" placeholder="Draft a message..." class="flex-1 px-5 py-3 bg-transparent outline-none text-sm font-medium" autocomplete="off" required>
       <button type="submit" class="h-12 w-12 bg-brand-600 hover:bg-brand-700 text-white rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/25 transition-all hover:scale-105 active:scale-95">
         <svg class="w-6 h-6 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
       </button>
@@ -61,12 +57,30 @@
   const scrollToBottom = () => { if (chatEl) chatEl.scrollTop = chatEl.scrollHeight; };
   
   window.addEventListener('load', scrollToBottom);
-  
-  // HTMX specific event to scroll after swap
-  document.body.addEventListener('htmx:afterSwap', (evt) => {
-    if (evt.detail.target.id === 'chat-messages') {
-      scrollToBottom();
-    }
-  });
+
+  // WebSocket setup
+  const apartmentPk = "{{ conversation.apartment.pk }}";
+  const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+  const chatSocket = new WebSocket(
+      wsScheme + '://' + window.location.host + '/ws/chat/' + apartmentPk + '/'
+  );
+
+  chatSocket.onmessage = function(e) {
+      const data = JSON.parse(e.data);
+      if (data.message_html) {
+          // Append the HTML received from the server
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = data.message_html;
+          chatEl.appendChild(tempDiv.firstElementChild);
+          scrollToBottom();
+      }
+  };
+
+  chatSocket.onclose = function(e) {
+      console.error('Chat socket closed unexpectedly');
+  };
+
+  // Prevent HTMX from swapping if we are already handling it via WebSocket
+  // Actually, HTMX usually adds to the DOM. If we use hx-swap="none", we avoid duplication.
 </script>
 {% endblock %}

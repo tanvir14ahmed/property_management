@@ -59,7 +59,7 @@
       filtered.forEach(apt => {
         const opt = document.createElement('option');
         opt.value = apt.id;
-        opt.textContent = `${apt.apartment_name} (${apt.apartment_code})`;
+        opt.textContent = `৳{apt.apartment_name} (৳{apt.apartment_code})`;
         if (apt.id == currentAptId) opt.selected = true;
         apartmentSelect.appendChild(opt);
       });

@@ -40,3 +40,13 @@ def unread_count_api(request):
         return JsonResponse({"count": 0})
     count = Notification.objects.filter(user=request.user, is_read=False).count()
     return JsonResponse({"count": count})
+
+
+def notification_redirect(request, pk):
+    """Marks notification as read and redirects to target."""
+    notif = get_object_or_404(Notification, pk=pk, user=request.user)
+    notif.mark_read()
+    target_url = notif.get_target_url()
+    if target_url:
+        return redirect(target_url)
+    return redirect("notifications:list")
