@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render
 from django.views.generic import TemplateView
 
 from properties.models import Apartment

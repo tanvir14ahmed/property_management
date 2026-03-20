@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.urls import path
 
+from . import views
 from .views import ChatListView, ChatRoomView
 
 app_name = "chatapp"
