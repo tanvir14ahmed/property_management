@@ -327,8 +327,34 @@
       })();
     </script>
     
+    <div id="modal-container" class="hidden"></div>
+    
     {% if user.is_authenticated %}
     <script>
+      // Global Modal Functions
+      function closeModal() {
+        const container = document.getElementById('modal-container');
+        if (container) {
+          container.innerHTML = '';
+          container.classList.add('hidden');
+          document.body.style.overflow = 'auto';
+        }
+      }
+
+      document.body.addEventListener('htmx:afterSettle', function(evt) {
+        if (evt.detail.target.id === 'modal-container') {
+          evt.detail.target.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+        }
+      });
+      
+      // Close on escape
+      document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+          closeModal();
+        }
+      });
+
       // WebSocket for notifications
       (function() {
         const notifBadge = document.getElementById('notif-badge');
