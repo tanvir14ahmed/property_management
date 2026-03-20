@@ -37,7 +37,7 @@ class Notification(models.Model):
             model_name = self.related_object_type.model
             if model_name == 'issue':
                 from django.urls import reverse
-                return reverse('issues:list')
+                return f"{reverse('issues:list')}?open_issue={self.related_object_id}"
             elif model_name == 'tenantjoinrequest':
                 from django.urls import reverse
                 return reverse('properties:building_detail', kwargs={'pk': self.related_object.building.pk})
