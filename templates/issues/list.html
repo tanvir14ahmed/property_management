@@ -44,8 +44,8 @@
           {% for issue in issues %}
           {% if issue.status != 'solved' and issue.status != 'closed' %}
           <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors">
-            <td class="px-6 py-4">
-              <p class="font-semibold">{{ issue.title }}</p>
+            <td class="px-6 py-4 cursor-pointer group" hx-get="{% url 'issues:detail' issue.pk %}" hx-target="#modal-container" hx-trigger="click">
+              <p class="font-semibold group-hover:text-emerald-600 transition-colors">{{ issue.title }}</p>
               <div class="flex items-center gap-2 mt-0.5">
                 <p class="text-[11px] text-slate-400 font-medium">{{ issue.apartment.apartment_name }}</p>
                 <span class="text-slate-300 dark:text-slate-700">•</span>
@@ -123,8 +123,8 @@
           {% for issue in issues %}
           {% if issue.status == 'solved' or issue.status == 'closed' %}
           <tr class="opacity-70 grayscale-50 hover:opacity-100 hover:grayscale-0 transition-all">
-            <td class="px-6 py-4">
-              <p class="font-semibold">{{ issue.title }}</p>
+            <td class="px-6 py-4 cursor-pointer group" hx-get="{% url 'issues:detail' issue.pk %}" hx-target="#modal-container" hx-trigger="click">
+              <p class="font-semibold group-hover:text-emerald-600 transition-colors">{{ issue.title }}</p>
               <p class="text-[11px] text-slate-400 font-medium">{{ issue.apartment.apartment_name }}</p>
             </td>
             <td class="px-6 py-4">
@@ -152,4 +152,9 @@
     </div>
   </section>
 </div>
+
+{% if request.GET.open_issue %}
+<div hx-get="{% url 'issues:detail' request.GET.open_issue %}" hx-target="#modal-container" hx-trigger="load"></div>
+{% endif %}
+
 {% endblock %}
