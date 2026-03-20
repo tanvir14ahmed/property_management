@@ -9,6 +9,7 @@ app_name = "issues"
 urlpatterns = [
     path("", views.IssueListView.as_view(), name="list"),
     path("create/", views.IssueCreateView.as_view(), name="create"),
+    path("<int:pk>/", views.IssueDetailView.as_view(), name="detail"),
     path("<int:pk>/resolve/", views.resolve_issue, name="resolve"),
     path("<int:pk>/approve/", views.approve_issue, name="approve"),
     path("<int:pk>/assign-vendor/", views.IssueAssignVendorView.as_view(), name="assign_vendor"),
