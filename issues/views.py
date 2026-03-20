@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView, ListView, DetailView
 
 from .forms import IssueForm
 from .models import Issue
@@ -25,6 +25,25 @@ class IssueListView(LoginRequiredMixin, ListView):
         if user.is_tenant:
             return Issue.objects.filter(tenant=user)
         return Issue.objects.none()
+
+class IssueDetailView(LoginRequiredMixin, DetailView):
+    model = Issue
+    template_name = "issues/partials/issue_detail_modal.html"
+    context_object_name = "issue"
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_owner:
+            return Issue.objects.filter(owner=user)
+        if user.is_tenant:
+            return Issue.objects.filter(tenant=user)
+        return Issue.objects.none()
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if request.headers.get("HX-Request"):
+            return render(request, self.template_name, self.get_context_data())
+        return redirect("issues:list")
 
 
 class IssueCreateView(LoginRequiredMixin, CreateView):

@@ -1,0 +1,76 @@
+<div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick="if(event.target === this) closeModal()">
+    <div class="glass border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black tracking-tight">{{ issue.title }}</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">Issue #{{ issue.id }}</p>
+                </div>
+            </div>
+            <button onclick="closeModal()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-8 overflow-y-auto space-y-6">
+            <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Description</p>
+                <div class="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                    {{ issue.description }}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Status</p>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                        {% if issue.status == 'open' %}bg-rose-100 text-rose-700
+                        {% elif issue.status == 'in_progress' %}bg-amber-100 text-amber-700
+                        {% elif issue.status == 'resolved' %}bg-blue-100 text-blue-700
+                        {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                        {{ issue.get_status_display }}
+                    </span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Raised</p>
+                    <p class="text-sm font-bold">{{ issue.created_at|timesince }} ago</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Property</p>
+                    <p class="text-sm font-bold">{{ issue.apartment.apartment_name }} ({{ issue.building.name }})</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Priority</p>
+                    <p class="text-sm font-bold capitalize">{{ issue.priority }}</p>
+                </div>
+            </div>
+
+            {% if issue.vendor %}
+            <div class="p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2">Assigned Vendor</p>
+                <div class="flex items-center gap-3">
+                    <div class="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">{{ issue.vendor.name }}</p>
+                        <p class="text-xs text-slate-400">{{ issue.vendor.phone }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+            <button onclick="closeModal()" class="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl font-bold text-sm transition-all">Close</button>
+        </div>
+    </div>
+</div>
